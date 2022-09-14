@@ -1,0 +1,71 @@
+import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
+
+import { BandAdd } from './components/BandAdd';
+import { BandList } from './components/BandList';
+
+const connectSocketServer = () => {
+  return io.connect('http://localhost:8080', {
+    transports: ['websocket'],
+  });
+};
+
+export const App = () => {
+  const [socket] = useState(connectSocketServer);
+  const [online, setOnline] = useState(false);
+  const [bands, setBands] = useState([]);
+
+  useEffect(() => {
+    console.log(socket);
+    setOnline(socket.connected);
+  }, [socket]);
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      setOnline(true);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    socket.on('disconnect', () => {
+      setOnline(false);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    socket.on('current-bands', (bands) => {
+      console.log(bands);
+      setBands(bands);
+    });
+  }, [socket]);
+
+  /* useEffect(()=>{
+
+  },[socket]) */
+
+  return (
+    <div className='container'>
+      <div className='alert'>
+        <p>
+          Service status:
+          {online ? (
+            <span className='ms-2 text-success'>Online</span>
+          ) : (
+            <span className='ms-2 text-danger'>Offline</span>
+          )}
+        </p>
+      </div>
+      <h1>BandNames</h1>
+      <hr />
+
+      <div className='row'>
+        <div className='col-8'>
+          <BandList bands={bands} />
+        </div>
+        <div className='col-4'>
+          <BandAdd />
+        </div>
+      </div>
+    </div>
+  );
+};
